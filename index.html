@@ -40,7 +40,7 @@
         </tbody>
     </table>
     <script>
-        document.getElementById('linkInput').addEventListener('keypress', function(event) {
+        document.addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 addLink();
             }
@@ -76,39 +76,27 @@
             const renameButton = document.createElement('button');
             renameButton.textContent = 'Rename';
             renameButton.onclick = function() {
-                let cancelCount = 0;
-                while (cancelCount < 2) {
-                    const choice = prompt('Type "nickname" to rename the nickname or "link" to rename the link. Press Cancel to default to nickname.');
-                    if (choice === null) {
-                        cancelCount++;
-                        if (cancelCount === 2) return;
-                        continue;
+                let newLink = prompt('Enter new link:', link.href);
+                if (newLink === null) {
+                    let newName = prompt('Enter new nickname:', nameCell.textContent);
+                    if (newName !== null) {
+                        nameCell.textContent = newName;
                     }
-                    if (choice === 'nickname') {
-                        const newName = prompt('Enter new nickname:', nameCell.textContent);
-                        if (newName !== null) {
-                            nameCell.textContent = newName;
-                        }
-                        return;
-                    } else if (choice === 'link') {
-                        const newLink = prompt('Enter new link:', link.href);
-                        if (newLink !== null && newLink.trim() !== '') {
-                            if (!newLink.startsWith('http://') && !newLink.startsWith('https://')) {
-                                newLink = 'https://' + newLink;
-                            }
-                            link.href = newLink;
-                            link.textContent = newLink;
-                        }
-                        return;
+                } else if (newLink.trim() !== '') {
+                    if (!newLink.startsWith('http://') && !newLink.startsWith('https://')) {
+                        newLink = 'https://' + newLink;
                     }
+                    link.href = newLink;
+                    link.textContent = newLink;
                 }
             };
             
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Delete';
             deleteButton.onclick = function() {
-                if (!confirm('Are you sure you want to delete this link?')) return;
-                tableBody.removeChild(row);
+                if (confirm('Are you sure you want to delete this link?')) {
+                    tableBody.removeChild(row);
+                }
             };
             
             actionCell.appendChild(renameButton);
