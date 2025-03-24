@@ -51,6 +51,22 @@
             }
         });
 
+        function loadLinks() {
+            const savedLinks = JSON.parse(localStorage.getItem('savedLinks')) || [];
+            savedLinks.forEach(({ nickname, url }) => addLinkToTable(nickname, url));
+        }
+
+        function saveLinks() {
+            const rows = document.querySelectorAll('#linkTableBody tr');
+            const links = [];
+            rows.forEach(row => {
+                const nickname = row.cells[0].textContent;
+                const url = row.cells[1].querySelector('a').href;
+                links.push({ nickname, url });
+            });
+            localStorage.setItem('savedLinks', JSON.stringify(links));
+        }
+
         function addLink() {
             let linkInput = document.getElementById('linkInput').value.trim();
             let nicknameInput = document.getElementById('nicknameInput').value.trim();
@@ -64,16 +80,23 @@
                 linkInput = 'https://' + linkInput;
             }
             
+            addLinkToTable(nicknameInput, linkInput);
+            saveLinks();
+            document.getElementById('linkInput').value = '';
+            document.getElementById('nicknameInput').value = '';
+        }
+
+        function addLinkToTable(nickname, url) {
             const tableBody = document.getElementById('linkTableBody');
             const row = document.createElement('tr');
             
             const nameCell = document.createElement('td');
-            nameCell.textContent = nicknameInput || linkInput;
+            nameCell.textContent = nickname || url;
             
             const linkCell = document.createElement('td');
             const link = document.createElement('a');
-            link.href = linkInput;
-            link.textContent = linkInput;
+            link.href = url;
+            link.textContent = url;
             link.target = "_blank";
             linkCell.appendChild(link);
             
@@ -94,6 +117,7 @@
                     link.href = newLink;
                     link.textContent = newLink;
                 }
+                saveLinks();
             };
             
             const deleteButton = document.createElement('button');
@@ -101,6 +125,7 @@
             deleteButton.onclick = function() {
                 if (confirm('Are you sure you want to delete this link?')) {
                     tableBody.removeChild(row);
+                    saveLinks();
                 }
             };
             
@@ -111,10 +136,9 @@
             row.appendChild(linkCell);
             row.appendChild(actionCell);
             tableBody.appendChild(row);
-            
-            document.getElementById('linkInput').value = '';
-            document.getElementById('nicknameInput').value = '';
         }
+
+        window.onload = loadLinks;
     </script>
 </body>
 </html>
