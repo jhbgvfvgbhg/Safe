@@ -37,11 +37,11 @@
             // Open the link automatically
             let newTab = window.open(convertedUrl, "_blank");
 
-            // Close the current tab if the new tab was successfully opened
+            // Redirect current tab to about:blank instead of closing
             if (newTab) {
-                window.close();
+                window.location.href = "about:blank";
             } else {
-                alert("The browser blocked the automatic closing. Please allow pop-ups.");
+                alert("Pop-up blocked! Please allow pop-ups and try again.");
             }
         }
 
