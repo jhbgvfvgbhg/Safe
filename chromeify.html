@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Converter</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        input, button { margin: 10px; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <h2>URL to Word Protocol Converter</h2>
+    <input type="text" id="urlInput" placeholder="Enter a URL (e.g., google.com)">
+    <button onclick="convertLink()">Convert</button>
+    <p id="output"></p>
+
+    <script>
+        function convertLink() {
+            let inputUrl = document.getElementById("urlInput").value.trim();
+            if (!inputUrl) {
+                alert("Please enter a URL.");
+                return;
+            }
+
+            // Add 'http://' if no protocol is provided
+            let formattedUrl = inputUrl.match(/^https?:\/\//) ? inputUrl : "http://" + inputUrl;
+            
+            // Convert to word://
+            let convertedUrl = formattedUrl.replace(/^https?:\/\//, "about.blank://");
+
+            // Display the link
+            document.getElementById("output").innerHTML = 
+                `Converted Link: <a href="${convertedUrl}" target="_blank">${convertedUrl}</a>`;
+
+            // Open the link automatically
+            window.open(convertedUrl, "_blank");
+        }
+
+        // Enable Enter key to trigger conversion
+        document.getElementById("urlInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent form submission (if inside a form)
+                convertLink();
+            }
+        });
+    </script>
+
+</body>
+</html>
