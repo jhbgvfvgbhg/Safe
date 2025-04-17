@@ -2,143 +2,216 @@
 <html lang="en">
 <head>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Link Saver</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        table {
-            margin: 20px auto;
-            border-collapse: collapse;
-            width: 50%;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 10px;
-            max-width: 200px;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-        button {
-            margin-left: 5px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Link Saver with Groups</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .group {
+        border: 1px solid #ccc;
+        margin: 20px auto;
+        padding: 10px;
+        width: 60%;
+    }
+    .group h3 {
+        margin: 0;
+        cursor: pointer;
+    }
+    table {
+        margin: 10px auto;
+        border-collapse: collapse;
+        width: 90%;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 10px;
+        max-width: 200px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    button {
+        margin-left: 5px;
+    }
+</style>
 </head>
 <body>
-    <h2>Save Your Links</h2>
-    <input type="text" id="linkInput" placeholder="Enter URL">
-    <input type="text" id="nicknameInput" placeholder="Enter Nickname (Optional)">
-    <button onclick="addLink()">Save</button>
-    <table>
-        <thead>
-            <tr>
-                <th>Nickname</th>
-                <th>Link</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="linkTableBody">
-        </tbody>
-    </table>
-    <script>
-        document.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                addLink();
-            }
-        });
+<h2>Save Your Links by Group</h2>
+<input type="text" id="groupNameInput" placeholder="Enter Group Name">
+<button onclick="addGroup()">Add Group</button>
+<div id="groupsContainer"></div>
+<script>
+    let groups = JSON.parse(localStorage.getItem('linkGroups')) || {};
 
-        function loadLinks() {
-            const savedLinks = JSON.parse(localStorage.getItem('savedLinks')) || [];
-            savedLinks.forEach(({ nickname, url }) => addLinkToTable(nickname, url));
+    function saveGroups() {
+        localStorage.setItem('linkGroups', JSON.stringify(groups));
+    }
+
+    function loadGroups() {
+        document.getElementById('groupsContainer').innerHTML = '';
+        for (let group in groups) {
+            createGroupElement(group, groups[group]);
         }
+    }
 
-        function saveLinks() {
-            const rows = document.querySelectorAll('#linkTableBody tr');
-            const links = [];
-            rows.forEach(row => {
-                const nickname = row.cells[0].textContent;
-                const url = row.cells[1].querySelector('a').href;
-                links.push({ nickname, url });
-            });
-            localStorage.setItem('savedLinks', JSON.stringify(links));
+    function addGroup() {
+        const groupName = document.getElementById('groupNameInput').value.trim();
+        if (groupName === '' || groups[groupName]) return;
+        groups[groupName] = [];
+        createGroupElement(groupName, []);
+        saveGroups();
+        document.getElementById('groupNameInput').value = '';
+    }
+
+    function createGroupElement(name, links) {
+        const container = document.getElementById('groupsContainer');
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'group';
+        groupDiv.dataset.group = name;
+
+        const title = document.createElement('h3');
+        title.textContent = name;
+        title.onclick = () => {
+            const table = groupDiv.querySelector('table');
+            const inputs = groupDiv.querySelectorAll('input, button');
+            table.style.display = table.style.display === 'none' ? '' : 'none';
+            inputs.forEach(el => el.style.display = el.style.display === 'none' ? '' : 'none');
+        };
+
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = 'Rename';
+        renameBtn.onclick = () => renameGroup(name);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete Group';
+        deleteBtn.onclick = () => deleteGroup(name);
+
+        const linkInput = document.createElement('input');
+        linkInput.placeholder = 'Enter URL';
+        const nicknameInput = document.createElement('input');
+        nicknameInput.placeholder = 'Enter Nickname (Optional)';
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        const table = document.createElement('table');
+        const tableHead = document.createElement('thead');
+        tableHead.innerHTML = '<tr><th>Nickname</th><th>Link</th><th>Actions</th></tr>';
+        const tableBody = document.createElement('tbody');
+
+        saveBtn.onclick = () => addLinkToGroup(name, linkInput.value, nicknameInput.value, tableBody, linkInput, nicknameInput);
+
+        links.forEach(({ nickname, url }) => addLinkRow(tableBody, nickname, url, name));
+
+        table.appendChild(tableHead);
+        table.appendChild(tableBody);
+
+        groupDiv.appendChild(title);
+        groupDiv.appendChild(renameBtn);
+        groupDiv.appendChild(deleteBtn);
+        groupDiv.appendChild(document.createElement('br'));
+        groupDiv.appendChild(linkInput);
+        groupDiv.appendChild(nicknameInput);
+        groupDiv.appendChild(saveBtn);
+        groupDiv.appendChild(table);
+        container.appendChild(groupDiv);
+    }
+
+    function renameGroup(oldName) {
+        const newName = prompt('Enter new group name:', oldName);
+        if (!newName || groups[newName]) return;
+        groups[newName] = groups[oldName];
+        delete groups[oldName];
+        saveGroups();
+        loadGroups();
+    }
+
+    function deleteGroup(name) {
+        if (!confirm('Delete this group?')) return;
+        const archive = JSON.parse(localStorage.getItem('archivedLinks')) || {};
+        archive[name] = groups[name];
+        localStorage.setItem('archivedLinks', JSON.stringify(archive));
+        delete groups[name];
+        saveGroups();
+        loadGroups();
+    }
+
+    function addLinkToGroup(groupName, url, nickname, tableBody, linkInput, nicknameInput) {
+        if (!url.trim()) return;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
         }
+        const linkObj = { nickname: nickname.trim() || url, url };
+        groups[groupName].push(linkObj);
+        saveGroups();
+        addLinkRow(tableBody, linkObj.nickname, linkObj.url, groupName);
+        linkInput.value = '';
+        nicknameInput.value = '';
+    }
 
-        function addLink() {
-            let linkInput = document.getElementById('linkInput').value.trim();
-            let nicknameInput = document.getElementById('nicknameInput').value.trim();
-            
-            if (linkInput === '') {
-                alert('Please enter a valid URL');
-                return;
-            }
-            
-            if (!linkInput.startsWith('http://') && !linkInput.startsWith('https://')) {
-                linkInput = 'https://' + linkInput;
-            }
-            
-            addLinkToTable(nicknameInput, linkInput);
-            saveLinks();
-            document.getElementById('linkInput').value = '';
-            document.getElementById('nicknameInput').value = '';
-        }
+    function addLinkRow(tableBody, nickname, url, groupName) {
+        const row = document.createElement('tr');
 
-        function addLinkToTable(nickname, url) {
-            const tableBody = document.getElementById('linkTableBody');
-            const row = document.createElement('tr');
-            
-            const nameCell = document.createElement('td');
-            nameCell.textContent = nickname || url;
-            
-            const linkCell = document.createElement('td');
-            const link = document.createElement('a');
-            link.href = url;
-            link.textContent = url;
-            link.target = "_blank";
-            linkCell.appendChild(link);
-            
-            const actionCell = document.createElement('td');
-            const renameButton = document.createElement('button');
-            renameButton.textContent = 'Rename';
-            renameButton.onclick = function() {
-                let newLink = prompt('Enter new link:', link.href);
-                if (newLink === null) {
-                    let newName = prompt('Enter new nickname:', nameCell.textContent);
-                    if (newName !== null) {
-                        nameCell.textContent = newName;
-                    }
-                } else if (newLink.trim() !== '') {
-                    if (!newLink.startsWith('http://') && !newLink.startsWith('https://')) {
-                        newLink = 'https://' + newLink;
-                    }
-                    link.href = newLink;
-                    link.textContent = newLink;
+        const nameCell = document.createElement('td');
+        nameCell.textContent = nickname;
+
+        const linkCell = document.createElement('td');
+        const link = document.createElement('a');
+        link.href = url;
+        link.textContent = url;
+        link.target = '_blank';
+        linkCell.appendChild(link);
+
+        const actionCell = document.createElement('td');
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = 'Rename';
+        renameBtn.onclick = function() {
+            let newUrl = prompt('Enter new link:', link.href);
+            if (newUrl === null) {
+                let newName = prompt('Enter new nickname:', nameCell.textContent);
+                if (newName !== null) {
+                    nameCell.textContent = newName;
+                    updateLinkInGroup(groupName, nickname, newName, link.href);
                 }
-                saveLinks();
-            };
-            
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Delete';
-            deleteButton.onclick = function() {
-                if (confirm('Are you sure you want to delete this link?')) {
-                    tableBody.removeChild(row);
-                    saveLinks();
+            } else if (newUrl.trim()) {
+                if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+                    newUrl = 'https://' + newUrl;
                 }
-            };
-            
-            actionCell.appendChild(renameButton);
-            actionCell.appendChild(deleteButton);
-            
-            row.appendChild(nameCell);
-            row.appendChild(linkCell);
-            row.appendChild(actionCell);
-            tableBody.appendChild(row);
-        }
+                link.href = newUrl;
+                link.textContent = newUrl;
+                updateLinkInGroup(groupName, nickname, nameCell.textContent, newUrl);
+            }
+        };
 
-        window.onload = loadLinks;
-    </script>
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = function() {
+            if (confirm('Delete this link?')) {
+                tableBody.removeChild(row);
+                groups[groupName] = groups[groupName].filter(l => l.url !== url);
+                saveGroups();
+            }
+        };
+
+        actionCell.appendChild(renameBtn);
+        actionCell.appendChild(deleteBtn);
+        row.appendChild(nameCell);
+        row.appendChild(linkCell);
+        row.appendChild(actionCell);
+        tableBody.appendChild(row);
+    }
+
+    function updateLinkInGroup(group, oldNickname, newNickname, newUrl) {
+        const link = groups[group].find(l => l.nickname === oldNickname);
+        if (link) {
+            link.nickname = newNickname;
+            link.url = newUrl;
+            saveGroups();
+        }
+    }
+
+    loadGroups();
+</script>
 </body>
 </html>
