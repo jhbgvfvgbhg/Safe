@@ -75,10 +75,10 @@
         const title = document.createElement('h3');
         title.textContent = name;
         title.onclick = () => {
-            const table = groupDiv.querySelector('table');
-            const inputs = groupDiv.querySelectorAll('input, button');
-            table.style.display = table.style.display === 'none' ? '' : 'none';
-            inputs.forEach(el => el.style.display = el.style.display === 'none' ? '' : 'none');
+            const elements = groupDiv.querySelectorAll('input, button, table');
+            elements.forEach(el => {
+                el.style.display = el.style.display === 'none' ? '' : 'none';
+            });
         };
 
         const renameBtn = document.createElement('button');
@@ -114,6 +114,13 @@
 
         table.appendChild(tableHead);
         table.appendChild(tableBody);
+
+        // Hide elements initially
+        table.style.display = 'none';
+        bulkInput.style.display = 'none';
+        saveBtn.style.display = 'none';
+        renameBtn.style.display = 'none';
+        deleteBtn.style.display = 'none';
 
         groupDiv.appendChild(title);
         groupDiv.appendChild(renameBtn);
