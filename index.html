@@ -89,10 +89,9 @@
         deleteBtn.textContent = 'Delete Group';
         deleteBtn.onclick = () => deleteGroup(name);
 
-        const linkInput = document.createElement('input');
-        linkInput.placeholder = 'Enter URL';
-        const nicknameInput = document.createElement('input');
-        nicknameInput.placeholder = 'Enter Nickname (Optional)';
+        const bulkInput = document.createElement('input');
+        bulkInput.placeholder = 'Enter links like "url, name; url2, name2"';
+
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Save';
         const table = document.createElement('table');
@@ -100,7 +99,16 @@
         tableHead.innerHTML = '<tr><th>Nickname</th><th>Link</th><th>Actions</th></tr>';
         const tableBody = document.createElement('tbody');
 
-        saveBtn.onclick = () => addLinkToGroup(name, linkInput.value, nicknameInput.value, tableBody, linkInput, nicknameInput);
+        saveBtn.onclick = () => {
+            const entries = bulkInput.value.split(';');
+            entries.forEach(entry => {
+                const [urlPart, namePart] = entry.split(',').map(s => s.trim());
+                if (urlPart) {
+                    addLinkToGroup(name, urlPart, namePart || '', tableBody);
+                }
+            });
+            bulkInput.value = '';
+        };
 
         links.forEach(({ nickname, url }) => addLinkRow(tableBody, nickname, url, name));
 
@@ -111,8 +119,7 @@
         groupDiv.appendChild(renameBtn);
         groupDiv.appendChild(deleteBtn);
         groupDiv.appendChild(document.createElement('br'));
-        groupDiv.appendChild(linkInput);
-        groupDiv.appendChild(nicknameInput);
+        groupDiv.appendChild(bulkInput);
         groupDiv.appendChild(saveBtn);
         groupDiv.appendChild(table);
         container.appendChild(groupDiv);
@@ -137,7 +144,7 @@
         loadGroups();
     }
 
-    function addLinkToGroup(groupName, url, nickname, tableBody, linkInput, nicknameInput) {
+    function addLinkToGroup(groupName, url, nickname, tableBody) {
         if (!url.trim()) return;
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
             url = 'https://' + url;
@@ -146,8 +153,6 @@
         groups[groupName].push(linkObj);
         saveGroups();
         addLinkRow(tableBody, linkObj.nickname, linkObj.url, groupName);
-        linkInput.value = '';
-        nicknameInput.value = '';
     }
 
     function addLinkRow(tableBody, nickname, url, groupName) {
